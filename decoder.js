@@ -35,8 +35,9 @@ function decodeJson(raw, options = {}) {
   }
 
   let output;
+  let toFormat;
   try {
-    const toFormat = sortKeys ? sortObjectKeys(value) : value;
+    toFormat = sortKeys ? sortObjectKeys(value) : value;
     output = pretty
       ? JSON.stringify(toFormat, null, 2)
       : JSON.stringify(toFormat);

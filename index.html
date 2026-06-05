@@ -14,33 +14,15 @@
   </head>
   <body>
     <header class="site-header">
-      <a id="hub-link" class="nav-back label" href="#">← Все инструменты</a>
-      <p class="body secondary site-header__tag">json · decode</p>
+      <div class="site-header__left">
+        <a id="hub-link" class="nav-back label" href="#">← Все инструменты</a>
+        <h1 class="site-title">JSON Decoder</h1>
+      </div>
+      <p id="status" class="body secondary site-header__status"></p>
     </header>
 
-    <main>
-      <section class="hero" aria-labelledby="hero-title">
-        <h1 id="hero-title" class="display">JSON</h1>
-        <p class="hero__lead">
-          Вставьте JSON или экранированную строку — раскроет вложенные
-          <code class="inline-code">"{\&quot;a\&quot;:1}"</code> и отформатирует.
-        </p>
-      </section>
-
-      <section class="tool" aria-labelledby="input-title">
-        <h2 id="input-title" class="h1">Ввод</h2>
-
-        <label class="field">
-          <span class="label">исходник</span>
-          <textarea
-            id="json-input"
-            class="field__input field__input--mono"
-            rows="10"
-            spellcheck="false"
-            placeholder='{"a":1} или "{\"b\":2}"'
-          ></textarea>
-        </label>
-
+    <main class="workspace">
+      <div class="toolbar card">
         <div class="options">
           <label class="option">
             <input id="pretty-print" type="checkbox" checked />
@@ -51,35 +33,73 @@
             <span class="body">Сортировать ключи</span>
           </label>
         </div>
-
-        <p id="parse-error" class="parse-error" hidden></p>
-
-        <label class="field">
-          <span class="label">результат</span>
-          <textarea
-            id="json-output"
-            class="field__input field__input--mono"
-            rows="12"
-            readonly
-            aria-readonly="true"
-          ></textarea>
-        </label>
-
-        <div class="tool__actions">
-          <button id="copy-btn" class="button-primary" type="button" disabled>
-            Копировать
-          </button>
+        <div class="toolbar__actions">
           <button id="minify-btn" class="button-secondary" type="button" disabled>
             Minify
           </button>
-          <span id="status" class="body secondary tool__status"></span>
+          <button id="copy-btn" class="button-primary" type="button" disabled>
+            Копировать
+          </button>
         </div>
-      </section>
-    </main>
+      </div>
 
-    <footer class="site-footer">
-      <p class="body secondary">Обработка в браузере</p>
-    </footer>
+      <p id="parse-error" class="parse-error" hidden></p>
+
+      <div class="split">
+        <section class="panel card" aria-labelledby="input-label">
+          <div class="panel__head">
+            <span id="input-label" class="label">исходник</span>
+            <button id="clear-btn" class="button-ghost" type="button">Очистить</button>
+          </div>
+          <textarea
+            id="json-input"
+            class="panel__editor"
+            spellcheck="false"
+            placeholder='{"a":1} или "{\"b\":2}"'
+          ></textarea>
+        </section>
+
+        <section class="panel card" aria-labelledby="output-label">
+          <div class="panel__head panel__head--output">
+            <span id="output-label" class="label">результат</span>
+            <div class="search" role="search">
+              <input
+                id="search-input"
+                class="search__input"
+                type="search"
+                placeholder="Поиск в JSON…"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <span id="search-count" class="search__count body secondary"></span>
+              <button
+                id="search-prev"
+                class="button-ghost"
+                type="button"
+                title="Предыдущее (Shift+Enter)"
+                disabled
+              >
+                ↑
+              </button>
+              <button
+                id="search-next"
+                class="button-ghost"
+                type="button"
+                title="Следующее (Enter)"
+                disabled
+              >
+                ↓
+              </button>
+            </div>
+          </div>
+          <pre
+            id="json-output"
+            class="panel__editor panel__editor--output"
+            aria-readonly="true"
+          ><code></code></pre>
+        </section>
+      </div>
+    </main>
 
     <script src="config.js"></script>
     <script src="decoder.js"></script>

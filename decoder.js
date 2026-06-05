@@ -54,10 +54,69 @@ function decodeJson(raw, options = {}) {
     ok: true,
     output,
     value,
+    displayValue: toFormat,
+    pretty,
     type,
     unwrapCount: depth,
     steps,
   };
+}
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function jsonStringHtml(str) {
+  return `"${escapeHtml(str)}"`;
+}
+
+function renderJsonHtml(value, pretty = true) {
+  const indentSize = 2;
+  return valueToHtml(value, 0, indentSize, pretty);
+}
+
+function valueToHtml(value, depth, indentSize, pretty) {
+  const pad = pretty ? " ".repeat(depth * indentSize) : "";
+  const padInner = pretty ? " ".repeat((depth + 1) * indentSize) : "";
+  const br = pretty ? "\n" : "";
+
+  if (value === null) {
+    return '<span class="json-null">null</span>';
+  }
+  if (typeof value === "boolean") {
+    return `<span class="json-boolean">${value}</span>`;
+  }
+  if (typeof value === "number") {
+    return `<span class="json-number">${value}</span>`;
+  }
+  if (typeof value === "string") {
+    return `<span class="json-string">${jsonStringHtml(value)}</span>`;
+  }
+
+  if (Array.isArray(value)) {
+    if (!value.length) return "[]";
+    const items = value
+      .map((item) => `${padInner}${valueToHtml(item, depth + 1, indentSize, pretty)}`)
+      .join(`,${br}`);
+    return `[${br}${items}${br}${pad}]`;
+  }
+
+  if (typeof value === "object") {
+    const keys = Object.keys(value);
+    if (!keys.length) return "{}";
+    const items = keys
+      .map((key) => {
+        const val = valueToHtml(value[key], depth + 1, indentSize, pretty);
+        return `${padInner}<span class="json-key">${jsonStringHtml(key)}</span>: ${val}`;
+      })
+      .join(`,${br}`);
+    return `{${br}${items}${br}${pad}}`;
+  }
+
+  return escapeHtml(String(value));
 }
 
 function sortObjectKeys(val) {

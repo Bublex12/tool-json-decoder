@@ -10,7 +10,6 @@ if (hubLink) {
 
 const inputEl = document.getElementById("json-input");
 const outputCodeEl = document.querySelector("#json-output code");
-const outputScrollEl = document.getElementById("json-output");
 const prettyEl = document.getElementById("pretty-print");
 const sortKeysEl = document.getElementById("sort-keys");
 const errorEl = document.getElementById("parse-error");
@@ -24,65 +23,63 @@ const searchPrev = document.getElementById("search-prev");
 const searchNext = document.getElementById("search-next");
 
 let lastOutput = "";
+let lastDisplayValue = null;
+let lastPretty = true;
 let currentMatchIndex = 0;
 let matchTotal = 0;
-
-function escapeHtml(text) {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-}
 
 function escapeRegExp(text) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function renderOutputView() {
-  const query = searchInput.value.trim();
-
-  if (!lastOutput) {
-    outputCodeEl.textContent = "";
-    matchTotal = 0;
-    updateSearchUi();
-    return;
-  }
-
-  if (!query) {
-    outputCodeEl.textContent = lastOutput;
-    matchTotal = 0;
-    currentMatchIndex = 0;
-    updateSearchUi();
-    return;
-  }
+function applySearchMarks(html, query, activeIdx) {
+  if (!query) return { html, total: 0 };
 
   const re = new RegExp(escapeRegExp(query), "gi");
-  const parts = [];
-  let lastIndex = 0;
+  const tokens = html.split(/(<[^>]+>)/g);
   let matchIndex = 0;
-  let m;
 
-  while ((m = re.exec(lastOutput)) !== null) {
-    parts.push(escapeHtml(lastOutput.slice(lastIndex, m.index)));
-    const active = matchIndex === currentMatchIndex ? " mark--active" : "";
-    parts.push(
-      `<mark class="mark${active}" data-idx="${matchIndex}">${escapeHtml(m[0])}</mark>`
-    );
-    matchIndex += 1;
-    lastIndex = m.index + m[0].length;
-    if (m[0].length === 0) {
-      re.lastIndex += 1;
-    }
-  }
+  const result = tokens
+    .map((token) => {
+      if (token.startsWith("<")) return token;
+      return token.replace(re, (m) => {
+        const active = matchIndex === activeIdx ? " mark--active" : "";
+        const wrapped = `<mark class="mark${active}" data-idx="${matchIndex}">${m}</mark>`;
+        matchIndex += 1;
+        return wrapped;
+      });
+    })
+    .join("");
 
-  parts.push(escapeHtml(lastOutput.slice(lastIndex)));
-  outputCodeEl.innerHTML = parts.join("");
-  matchTotal = matchIndex;
-  if (matchTotal && currentMatchIndex >= matchTotal) {
-    currentMatchIndex = 0;
-    renderOutputView();
+  return { html: result, total: matchIndex };
+}
+
+function renderOutputView() {
+  if (lastDisplayValue === null) {
+    outputCodeEl.innerHTML = "";
+    matchTotal = 0;
+    updateSearchUi();
     return;
   }
+
+  let html = renderJsonHtml(lastDisplayValue, lastPretty);
+  const query = searchInput.value.trim();
+
+  if (query) {
+    const searched = applySearchMarks(html, query, currentMatchIndex);
+    html = searched.html;
+    matchTotal = searched.total;
+    if (matchTotal && currentMatchIndex >= matchTotal) {
+      currentMatchIndex = 0;
+      renderOutputView();
+      return;
+    }
+  } else {
+    matchTotal = 0;
+    currentMatchIndex = 0;
+  }
+
+  outputCodeEl.innerHTML = html;
   updateSearchUi();
   scrollToActiveMark();
 }
@@ -125,6 +122,7 @@ function render() {
     errorEl.textContent = result.error;
     errorEl.hidden = false;
     lastOutput = "";
+    lastDisplayValue = null;
     renderOutputView();
     statusEl.textContent = "ошибка";
     copyBtn.disabled = true;
@@ -134,6 +132,8 @@ function render() {
 
   errorEl.hidden = true;
   lastOutput = result.output;
+  lastDisplayValue = result.displayValue;
+  lastPretty = result.pretty;
   renderOutputView();
   copyBtn.disabled = false;
   minifyBtn.disabled = false;

@@ -278,6 +278,42 @@ body {
   outline: 1px solid var(--color-primary);
 }
 
+.legend-key {
+  color: var(--color-tertiary);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.json-key {
+  color: var(--color-tertiary);
+  font-weight: 600;
+}
+
+.json-string {
+  color: var(--color-primary);
+}
+
+.json-number {
+  color: var(--color-secondary);
+}
+
+.json-boolean,
+.json-null {
+  color: var(--color-secondary);
+  font-style: italic;
+}
+
+.mark .json-key,
+.mark .json-string,
+.mark .json-number,
+.mark .json-boolean,
+.mark .json-null {
+  color: inherit;
+  font-weight: inherit;
+  font-style: inherit;
+}
+
 .button-primary {
   padding: 8px 14px;
   font-family: var(--font-label);

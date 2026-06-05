@@ -215,8 +215,9 @@ body {
   outline: none;
   overflow: auto;
   tab-size: 2;
-  white-space: pre;
-  word-break: normal;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .panel__editor--output {
@@ -224,11 +225,14 @@ body {
 }
 
 .panel__editor--output code {
+  display: block;
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
   color: inherit;
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .search {

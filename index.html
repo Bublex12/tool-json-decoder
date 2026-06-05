@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JSON Decoder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Teko:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a id="hub-link" class="nav-back label" href="#">← Все инструменты</a>
+      <p class="body secondary site-header__tag">json · decode</p>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <h1 id="hero-title" class="display">JSON</h1>
+        <p class="hero__lead">
+          Вставьте JSON или экранированную строку — раскроет вложенные
+          <code class="inline-code">"{\&quot;a\&quot;:1}"</code> и отформатирует.
+        </p>
+      </section>
+
+      <section class="tool" aria-labelledby="input-title">
+        <h2 id="input-title" class="h1">Ввод</h2>
+
+        <label class="field">
+          <span class="label">исходник</span>
+          <textarea
+            id="json-input"
+            class="field__input field__input--mono"
+            rows="10"
+            spellcheck="false"
+            placeholder='{"a":1} или "{\"b\":2}"'
+          ></textarea>
+        </label>
+
+        <div class="options">
+          <label class="option">
+            <input id="pretty-print" type="checkbox" checked />
+            <span class="body">Pretty print</span>
+          </label>
+          <label class="option">
+            <input id="sort-keys" type="checkbox" />
+            <span class="body">Сортировать ключи</span>
+          </label>
+        </div>
+
+        <p id="parse-error" class="parse-error" hidden></p>
+
+        <label class="field">
+          <span class="label">результат</span>
+          <textarea
+            id="json-output"
+            class="field__input field__input--mono"
+            rows="12"
+            readonly
+            aria-readonly="true"
+          ></textarea>
+        </label>
+
+        <div class="tool__actions">
+          <button id="copy-btn" class="button-primary" type="button" disabled>
+            Копировать
+          </button>
+          <button id="minify-btn" class="button-secondary" type="button" disabled>
+            Minify
+          </button>
+          <span id="status" class="body secondary tool__status"></span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p class="body secondary">Обработка в браузере</p>
+    </footer>
+
+    <script src="config.js"></script>
+    <script src="decoder.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

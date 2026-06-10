@@ -1,11 +1,6 @@
-const isLocal =
-  location.hostname === "localhost" || location.hostname === "127.0.0.1";
-
 const hubLink = document.getElementById("hub-link");
 if (hubLink) {
-  hubLink.href = isLocal
-    ? window.TOOLS_HUB_LOCAL_URL ?? window.TOOLS_HUB_URL
-    : window.TOOLS_HUB_URL;
+  hubLink.href = window.TOOLS_HUB_URL;
 }
 
 const inputEl = document.getElementById("json-input");

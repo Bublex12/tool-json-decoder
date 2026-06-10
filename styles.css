@@ -76,8 +76,12 @@ body {
 .site-header__left {
   display: flex;
   align-items: center;
-  gap: var(--space-lg);
+  gap: var(--space-md);
   min-width: 0;
+}
+
+.site-icon {
+  flex-shrink: 0;
 }
 
 .site-title {

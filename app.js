@@ -12,16 +12,32 @@ const statusEl = document.getElementById("status");
 const copyBtn = document.getElementById("copy-btn");
 const minifyBtn = document.getElementById("minify-btn");
 const clearBtn = document.getElementById("clear-btn");
+const pasteBtn = document.getElementById("paste-btn");
+const downloadBtn = document.getElementById("download-btn");
+const sampleBtn = document.getElementById("sample-btn");
 const searchInput = document.getElementById("search-input");
 const searchCount = document.getElementById("search-count");
 const searchPrev = document.getElementById("search-prev");
 const searchNext = document.getElementById("search-next");
+const toastEl = document.getElementById("toast");
 
 let lastOutput = "";
 let lastDisplayValue = null;
 let lastPretty = true;
 let currentMatchIndex = 0;
 let matchTotal = 0;
+
+const SAMPLE = '{"user":"{\\"id\\":1,\\"name\\":\\"Ada\\"}"}';
+
+function showToast(message) {
+  if (!toastEl) return;
+  toastEl.textContent = message;
+  toastEl.hidden = false;
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(() => {
+    toastEl.hidden = true;
+  }, 2200);
+}
 
 function escapeRegExp(text) {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -122,6 +138,7 @@ function render() {
     statusEl.textContent = "ошибка";
     copyBtn.disabled = true;
     minifyBtn.disabled = true;
+    downloadBtn.disabled = true;
     return;
   }
 
@@ -132,6 +149,7 @@ function render() {
   renderOutputView();
   copyBtn.disabled = false;
   minifyBtn.disabled = false;
+  downloadBtn.disabled = false;
 
   const parts = [describeValue(result.value)];
   if (result.unwrapCount > 0) {
@@ -144,10 +162,9 @@ async function copyOutput() {
   if (!lastOutput) return;
   try {
     await navigator.clipboard.writeText(lastOutput);
-    statusEl.textContent = "Скопировано";
-    setTimeout(render, 1200);
+    showToast("Скопировано");
   } catch {
-    statusEl.textContent = "Не удалось скопировать";
+    showToast("Не удалось скопировать");
   }
 }
 
@@ -156,7 +173,37 @@ function minify() {
   if (result.ok) {
     prettyEl.checked = false;
     render();
+    showToast("Minify");
   }
+}
+
+async function pasteInput() {
+  try {
+    inputEl.value = await navigator.clipboard.readText();
+    render();
+    showToast("Вставлено");
+  } catch {
+    showToast("Нет доступа к буферу");
+  }
+}
+
+function downloadOutput() {
+  if (!lastOutput) return;
+  const blob = new Blob([lastOutput], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "decoded.json";
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast("Скачано decoded.json");
+}
+
+function loadSample() {
+  inputEl.value = SAMPLE;
+  prettyEl.checked = true;
+  render();
+  showToast("Пример загружен");
 }
 
 searchInput.addEventListener("input", () => {
@@ -187,15 +234,25 @@ prettyEl.addEventListener("change", render);
 sortKeysEl.addEventListener("change", render);
 copyBtn.addEventListener("click", copyOutput);
 minifyBtn.addEventListener("click", minify);
+pasteBtn?.addEventListener("click", pasteInput);
+downloadBtn?.addEventListener("click", downloadOutput);
+sampleBtn?.addEventListener("click", loadSample);
 
 document.addEventListener("keydown", (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === "f" && !e.shiftKey) {
-    const inInput = document.activeElement === inputEl;
-    if (!inInput) {
+    if (document.activeElement !== inputEl) {
       e.preventDefault();
       searchInput.focus();
       searchInput.select();
     }
+  }
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "C") {
+    e.preventDefault();
+    copyOutput();
+  }
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "M") {
+    e.preventDefault();
+    minify();
   }
 });
 

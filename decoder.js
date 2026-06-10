@@ -1,4 +1,5 @@
 const MAX_DEPTH = 12;
+const MAX_INPUT_CHARS = 2_000_000;
 
 function tryParse(text) {
   return JSON.parse(text);
@@ -9,6 +10,11 @@ function decodeJson(raw, options = {}) {
   let current = raw.trim();
   if (!current) {
     return { error: "Вставьте JSON или экранированную строку" };
+  }
+  if (current.length > MAX_INPUT_CHARS) {
+    return {
+      error: `Слишком большой ввод (макс. ${MAX_INPUT_CHARS.toLocaleString("ru")} символов)`,
+    };
   }
 
   const steps = [];
@@ -91,6 +97,9 @@ function valueToHtml(value, depth, indentSize, pretty) {
     return `<span class="json-boolean">${value}</span>`;
   }
   if (typeof value === "number") {
+    if (!Number.isFinite(value)) {
+      return `<span class="json-number">${escapeHtml(String(value))}</span>`;
+    }
     return `<span class="json-number">${value}</span>`;
   }
   if (typeof value === "string") {

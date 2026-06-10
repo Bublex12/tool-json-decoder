@@ -36,14 +36,24 @@
           </label>
         </div>
         <div class="toolbar__actions">
+          <button id="sample-btn" class="button-ghost" type="button">Пример</button>
+          <button id="paste-btn" class="button-secondary" type="button">Вставить</button>
           <button id="minify-btn" class="button-secondary" type="button" disabled>
             Minify
+          </button>
+          <button id="download-btn" class="button-secondary" type="button" disabled>
+            Скачать
           </button>
           <button id="copy-btn" class="button-primary" type="button" disabled>
             Копировать
           </button>
         </div>
       </div>
+
+      <p class="hints body secondary">
+        <kbd>Ctrl</kbd>+<kbd>F</kbd> поиск · <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> копировать ·
+        <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd> minify
+      </p>
 
       <p id="parse-error" class="parse-error" hidden></p>
 
@@ -102,6 +112,8 @@
         </section>
       </div>
     </main>
+
+    <p id="toast" class="toast" role="status" aria-live="polite" hidden></p>
 
     <script src="config.js"></script>
     <script src="decoder.js"></script>

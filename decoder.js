@@ -141,25 +141,24 @@ function valueToHtml(value, path, depth, indentSize, pretty, options = {}) {
         const rawVal = value[key];
 
         if (
-          key === "bytes" &&
           typeof rawVal === "string" &&
+          !isDerivedDecodeKey(key) &&
           clickableBytes &&
-          peekBytesDecodable(rawVal) &&
-          !decodedPaths.has(path) &&
-          value.bytes_value === undefined
+          canDecodeStringField(key, rawVal) &&
+          !decodedPaths.has(childPath) &&
+          value[`${key}_value`] === undefined
         ) {
           const strHtml = jsonStringHtml(rawVal);
-          const val = `<button type="button" class="json-bytes-clickable json-string" data-bytes-path="${escapeHtml(path)}" title="Декодировать bytes в значение (scale из панели)">${strHtml}</button>`;
+          const val = `<button type="button" class="json-bytes-clickable json-string" data-bytes-path="${escapeHtml(childPath)}" title="Декодировать в значение (scale из панели)">${strHtml}</button>`;
           return `${padInner}<span class="json-key">${jsonStringHtml(key)}</span>: ${val}`;
         }
 
         const val = valueToHtml(rawVal, childPath, depth + 1, indentSize, pretty, options);
-        const keyClass =
-          key === "bytes_value"
-            ? "json-key json-key--bytes-value"
-            : key === "bytes_hex"
-              ? "json-key json-key--bytes-hex"
-              : "json-key";
+        const keyClass = key.endsWith("_value")
+          ? "json-key json-key--bytes-value"
+          : key.endsWith("_hex")
+            ? "json-key json-key--bytes-hex"
+            : "json-key";
         return `${padInner}<span class="${keyClass}">${jsonStringHtml(key)}</span>: ${val}`;
       })
       .join(`,${br}`);

@@ -73,6 +73,32 @@ function decodeBytesFromString(text, scaleInput) {
   };
 }
 
+function looksLikeEncodedBytes(text) {
+  for (let i = 0; i < text.length; i++) {
+    const cp = text.codePointAt(i);
+    if (cp > 0xffff) return false;
+    const b = cp & 0xff;
+    if (b === 0x09) return true;
+    if (b <= 0x08 || b === 0x0b || b === 0x0c || b === 0x0e || b === 0x1f || b >= 0x7f) {
+      return true;
+    }
+    if (text[i] === "\\" && i + 1 < text.length && /[a-zA-Z]/.test(text[i + 1])) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function isDerivedDecodeKey(key) {
+  return key.endsWith("_hex") || key.endsWith("_value");
+}
+
+function canDecodeStringField(key, text) {
+  if (!peekBytesDecodable(text)) return false;
+  if (key === "bytes") return true;
+  return looksLikeEncodedBytes(text);
+}
+
 function peekBytesDecodable(text) {
   if (typeof text !== "string" || !text.length) return false;
   try {
@@ -111,15 +137,19 @@ function enrichBytesFields(value, scale, options = {}) {
       out[key] = walk(val, joinJsonPath(currentPath, key));
     }
 
-    if (typeof node.bytes === "string" && out.bytes_value === undefined) {
-      const shouldDecode = decodeAll || pathSet.has(currentPath);
-      if (shouldDecode) {
-        const decoded = decodeBytesFromString(node.bytes, scale);
-        if (decoded.ok) {
-          out.bytes_hex = decoded.bytesHex;
-          out.bytes_value = decoded.value;
-          decodedCount += 1;
-        }
+    for (const [key, val] of Object.entries(node)) {
+      if (typeof val !== "string" || isDerivedDecodeKey(key)) continue;
+      if (out[`${key}_value`] !== undefined) continue;
+
+      const fieldPath = joinJsonPath(currentPath, key);
+      const shouldDecode = decodeAll || pathSet.has(fieldPath);
+      if (!shouldDecode || !canDecodeStringField(key, val)) continue;
+
+      const decoded = decodeBytesFromString(val, scale);
+      if (decoded.ok) {
+        out[`${key}_hex`] = decoded.bytesHex;
+        out[`${key}_value`] = decoded.value;
+        decodedCount += 1;
       }
     }
 

@@ -32,7 +32,8 @@ let currentMatchIndex = 0;
 let matchTotal = 0;
 const decodedPaths = new Set();
 
-const SAMPLE = '{"amount":{"bytes":"\\t>h"},"meta":"{\\"bytes\\":\\"\\\\u0003\\\\u0094Ì\\"}"}';
+const SAMPLE =
+  '{"compensationAmount":"\\t>h","creditAmountForCompanyWithCompensation":"\\\\p\\u0010","amount":{"bytes":"\\t>h"}}';
 
 function showToast(message) {
   if (!toastEl) return;
@@ -175,7 +176,7 @@ function render() {
     parts.push(`раскрыто ${result.unwrapCount} сл.`);
   }
   if (result.bytesDecodedCount > 0) {
-    parts.push(`bytes → значение: ${result.bytesDecodedCount}`);
+    parts.push(`декодировано полей: ${result.bytesDecodedCount}`);
   }
   statusEl.textContent = parts.join(" · ");
 }
@@ -191,7 +192,11 @@ function decodeBytesAtPath(path) {
   });
   if (!preview.ok) return;
 
-  const bytesStr = getBytesStringAtPath(preview.value, path);
+  const bytesStr = getValueAtPath(preview.value, path);
+  if (typeof bytesStr !== "string") {
+    showToast("Не удалось декодировать");
+    return;
+  }
   const decoded = decodeBytesFromString(bytesStr, bytesScaleEl?.value ?? 2);
   if (!decoded.ok) {
     showToast(decoded.error || "Не удалось декодировать");
@@ -203,17 +208,15 @@ function decodeBytesAtPath(path) {
   showToast(`${decoded.value} (${decoded.bytesHex})`);
 }
 
-function getBytesStringAtPath(value, path) {
-  if (path === "" || path === "/") {
-    return value?.bytes;
-  }
+function getValueAtPath(value, path) {
+  if (path === "" || path === "/") return value;
   const segments = path.replace(/^\//, "").split("/");
   let node = value;
   for (const seg of segments) {
     const key = seg.replace(/~1/g, "/").replace(/~0/g, "~");
     node = node?.[key];
   }
-  return node?.bytes;
+  return node;
 }
 
 async function copyOutput() {

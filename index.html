@@ -34,6 +34,22 @@
             <input id="sort-keys" type="checkbox" />
             <span class="body">Сортировать ключи</span>
           </label>
+          <label class="option">
+            <input id="decode-bytes" type="checkbox" />
+            <span class="body">Декодировать bytes</span>
+          </label>
+          <label class="option option--scale" id="bytes-scale-wrap" hidden>
+            <span class="body">scale</span>
+            <input
+              id="bytes-scale"
+              class="scale-input"
+              type="number"
+              min="0"
+              max="18"
+              step="1"
+              value="2"
+            />
+          </label>
         </div>
         <div class="toolbar__actions">
           <button id="sample-btn" class="button-ghost" type="button">Пример</button>
@@ -52,7 +68,7 @@
 
       <p class="hints body secondary">
         <kbd>Ctrl</kbd>+<kbd>F</kbd> поиск · <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> копировать ·
-        <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd> minify
+        <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd> minify · клик по <span class="legend-bytes">bytes</span> — декодировать поле
       </p>
 
       <p id="parse-error" class="parse-error" hidden></p>
@@ -116,6 +132,7 @@
     <p id="toast" class="toast" role="status" aria-live="polite" hidden></p>
 
     <script src="config.js"></script>
+    <script src="bytes-decode.js"></script>
     <script src="decoder.js"></script>
     <script src="app.js"></script>
   </body>

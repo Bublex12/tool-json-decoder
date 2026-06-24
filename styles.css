@@ -166,6 +166,22 @@ body {
   accent-color: var(--color-tertiary);
 }
 
+.option--scale .scale-input {
+  width: 3.25rem;
+  padding: 4px 6px;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--color-primary);
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.option--scale .scale-input:focus {
+  outline: none;
+  border-color: var(--color-tertiary);
+}
+
 .toolbar__actions {
   display: flex;
   gap: var(--space-sm);
@@ -306,8 +322,42 @@ body {
   font-weight: 600;
 }
 
+.json-key--bytes-value {
+  color: var(--color-secondary);
+}
+
+.json-key--bytes-hex {
+  color: var(--color-tertiary);
+  opacity: 0.85;
+}
+
 .json-string {
   color: var(--color-primary);
+}
+
+.json-bytes-clickable {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  border-bottom: 1px dashed var(--color-tertiary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.json-bytes-clickable:hover,
+.json-bytes-clickable:focus-visible {
+  color: var(--color-secondary);
+  border-bottom-color: var(--color-secondary);
+  outline: none;
+}
+
+.legend-bytes {
+  color: var(--color-primary);
+  border-bottom: 1px dashed var(--color-tertiary);
 }
 
 .json-number {

@@ -7,6 +7,9 @@ const inputEl = document.getElementById("json-input");
 const outputCodeEl = document.querySelector("#json-output code");
 const prettyEl = document.getElementById("pretty-print");
 const sortKeysEl = document.getElementById("sort-keys");
+const decodeBytesEl = document.getElementById("decode-bytes");
+const bytesScaleEl = document.getElementById("bytes-scale");
+const bytesScaleWrap = document.getElementById("bytes-scale-wrap");
 const errorEl = document.getElementById("parse-error");
 const statusEl = document.getElementById("status");
 const copyBtn = document.getElementById("copy-btn");
@@ -24,10 +27,12 @@ const toastEl = document.getElementById("toast");
 let lastOutput = "";
 let lastDisplayValue = null;
 let lastPretty = true;
+let lastBytesDecodedCount = 0;
 let currentMatchIndex = 0;
 let matchTotal = 0;
+const decodedPaths = new Set();
 
-const SAMPLE = '{"user":"{\\"id\\":1,\\"name\\":\\"Ada\\"}"}';
+const SAMPLE = '{"amount":{"bytes":"\\t>h"},"meta":"{\\"bytes\\":\\"\\\\u0003\\\\u0094Ì\\"}"}';
 
 function showToast(message) {
   if (!toastEl) return;
@@ -73,7 +78,10 @@ function renderOutputView() {
     return;
   }
 
-  let html = renderJsonHtml(lastDisplayValue, lastPretty);
+  let html = renderJsonHtml(lastDisplayValue, lastPretty, {
+    clickableBytes: true,
+    decodedPaths,
+  });
   const query = searchInput.value.trim();
 
   if (query) {
@@ -123,10 +131,20 @@ function gotoMatch(delta) {
   renderOutputView();
 }
 
+function updateBytesScaleVisibility() {
+  if (bytesScaleWrap) {
+    bytesScaleWrap.hidden = !decodeBytesEl.checked && decodedPaths.size === 0;
+  }
+}
+
 function render() {
+  updateBytesScaleVisibility();
   const result = decodeJson(inputEl.value, {
     pretty: prettyEl.checked,
     sortKeys: sortKeysEl.checked,
+    decodeBytes: decodeBytesEl.checked,
+    bytesPaths: [...decodedPaths],
+    bytesScale: bytesScaleEl?.value ?? 2,
   });
 
   if (result.error) {
@@ -146,6 +164,7 @@ function render() {
   lastOutput = result.output;
   lastDisplayValue = result.displayValue;
   lastPretty = result.pretty;
+  lastBytesDecodedCount = result.bytesDecodedCount;
   renderOutputView();
   copyBtn.disabled = false;
   minifyBtn.disabled = false;
@@ -155,7 +174,46 @@ function render() {
   if (result.unwrapCount > 0) {
     parts.push(`раскрыто ${result.unwrapCount} сл.`);
   }
+  if (result.bytesDecodedCount > 0) {
+    parts.push(`bytes → значение: ${result.bytesDecodedCount}`);
+  }
   statusEl.textContent = parts.join(" · ");
+}
+
+function decodeBytesAtPath(path) {
+  if (path === undefined || path === null) return;
+
+  const preview = decodeJson(inputEl.value, {
+    pretty: prettyEl.checked,
+    sortKeys: sortKeysEl.checked,
+    decodeBytes: false,
+    bytesPaths: [],
+  });
+  if (!preview.ok) return;
+
+  const bytesStr = getBytesStringAtPath(preview.value, path);
+  const decoded = decodeBytesFromString(bytesStr, bytesScaleEl?.value ?? 2);
+  if (!decoded.ok) {
+    showToast(decoded.error || "Не удалось декодировать");
+    return;
+  }
+
+  decodedPaths.add(path);
+  render();
+  showToast(`${decoded.value} (${decoded.bytesHex})`);
+}
+
+function getBytesStringAtPath(value, path) {
+  if (path === "" || path === "/") {
+    return value?.bytes;
+  }
+  const segments = path.replace(/^\//, "").split("/");
+  let node = value;
+  for (const seg of segments) {
+    const key = seg.replace(/~1/g, "/").replace(/~0/g, "~");
+    node = node?.[key];
+  }
+  return node?.bytes;
 }
 
 async function copyOutput() {
@@ -202,6 +260,7 @@ function downloadOutput() {
 function loadSample() {
   inputEl.value = SAMPLE;
   prettyEl.checked = true;
+  decodedPaths.clear();
   render();
   showToast("Пример загружен");
 }
@@ -225,13 +284,26 @@ clearBtn.addEventListener("click", () => {
   inputEl.value = "";
   searchInput.value = "";
   currentMatchIndex = 0;
+  decodedPaths.clear();
   render();
   inputEl.focus();
 });
 
-inputEl.addEventListener("input", render);
+outputCodeEl.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-bytes-path]");
+  if (!btn || decodeBytesEl.checked) return;
+  e.preventDefault();
+  decodeBytesAtPath(btn.dataset.bytesPath ?? "");
+});
+
+inputEl.addEventListener("input", () => {
+  decodedPaths.clear();
+  render();
+});
 prettyEl.addEventListener("change", render);
 sortKeysEl.addEventListener("change", render);
+decodeBytesEl.addEventListener("change", render);
+bytesScaleEl?.addEventListener("input", render);
 copyBtn.addEventListener("click", copyOutput);
 minifyBtn.addEventListener("click", minify);
 pasteBtn?.addEventListener("click", pasteInput);

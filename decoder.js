@@ -6,7 +6,13 @@ function tryParse(text) {
 }
 
 function decodeJson(raw, options = {}) {
-  const { pretty = true, sortKeys = false } = options;
+  const {
+    pretty = true,
+    sortKeys = false,
+    decodeBytes = false,
+    bytesPaths = [],
+    bytesScale = 2,
+  } = options;
   let current = raw.trim();
   if (!current) {
     return { error: "Вставьте JSON или экранированную строку" };
@@ -42,7 +48,14 @@ function decodeJson(raw, options = {}) {
 
   let output;
   let toFormat;
+  let bytesDecodedCount = 0;
   try {
+    const enriched = enrichBytesFields(value, bytesScale, {
+      decodeAll: decodeBytes,
+      paths: bytesPaths,
+    });
+    value = enriched.value;
+    bytesDecodedCount = enriched.decodedCount;
     toFormat = sortKeys ? sortObjectKeys(value) : value;
     output = pretty
       ? JSON.stringify(toFormat, null, 2)
@@ -65,6 +78,7 @@ function decodeJson(raw, options = {}) {
     pretty,
     type,
     unwrapCount: depth,
+    bytesDecodedCount,
     steps,
   };
 }
@@ -80,12 +94,13 @@ function jsonStringHtml(str) {
   return `"${escapeHtml(str)}"`;
 }
 
-function renderJsonHtml(value, pretty = true) {
+function renderJsonHtml(value, pretty = true, options = {}) {
   const indentSize = 2;
-  return valueToHtml(value, 0, indentSize, pretty);
+  return valueToHtml(value, "", 0, indentSize, pretty, options);
 }
 
-function valueToHtml(value, depth, indentSize, pretty) {
+function valueToHtml(value, path, depth, indentSize, pretty, options = {}) {
+  const { clickableBytes = false, decodedPaths = new Set() } = options;
   const pad = pretty ? " ".repeat(depth * indentSize) : "";
   const padInner = pretty ? " ".repeat((depth + 1) * indentSize) : "";
   const br = pretty ? "\n" : "";
@@ -109,7 +124,10 @@ function valueToHtml(value, depth, indentSize, pretty) {
   if (Array.isArray(value)) {
     if (!value.length) return "[]";
     const items = value
-      .map((item) => `${padInner}${valueToHtml(item, depth + 1, indentSize, pretty)}`)
+      .map((item, index) => {
+        const itemPath = joinJsonPath(path, index);
+        return `${padInner}${valueToHtml(item, itemPath, depth + 1, indentSize, pretty, options)}`;
+      })
       .join(`,${br}`);
     return `[${br}${items}${br}${pad}]`;
   }
@@ -119,8 +137,30 @@ function valueToHtml(value, depth, indentSize, pretty) {
     if (!keys.length) return "{}";
     const items = keys
       .map((key) => {
-        const val = valueToHtml(value[key], depth + 1, indentSize, pretty);
-        return `${padInner}<span class="json-key">${jsonStringHtml(key)}</span>: ${val}`;
+        const childPath = joinJsonPath(path, key);
+        const rawVal = value[key];
+
+        if (
+          key === "bytes" &&
+          typeof rawVal === "string" &&
+          clickableBytes &&
+          peekBytesDecodable(rawVal) &&
+          !decodedPaths.has(path) &&
+          value.bytes_value === undefined
+        ) {
+          const strHtml = jsonStringHtml(rawVal);
+          const val = `<button type="button" class="json-bytes-clickable json-string" data-bytes-path="${escapeHtml(path)}" title="Декодировать bytes в значение (scale из панели)">${strHtml}</button>`;
+          return `${padInner}<span class="json-key">${jsonStringHtml(key)}</span>: ${val}`;
+        }
+
+        const val = valueToHtml(rawVal, childPath, depth + 1, indentSize, pretty, options);
+        const keyClass =
+          key === "bytes_value"
+            ? "json-key json-key--bytes-value"
+            : key === "bytes_hex"
+              ? "json-key json-key--bytes-hex"
+              : "json-key";
+        return `${padInner}<span class="${keyClass}">${jsonStringHtml(key)}</span>: ${val}`;
       })
       .join(`,${br}`);
     return `{${br}${items}${br}${pad}}`;

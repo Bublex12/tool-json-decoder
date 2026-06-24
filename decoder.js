@@ -137,12 +137,13 @@ function valueToHtml(value, path, depth, indentSize, pretty, options = {}) {
     if (!keys.length) return "{}";
     const items = keys
       .map((key) => {
+        if (isDerivedDecodeKey(key)) return null;
+
         const childPath = joinJsonPath(path, key);
         const rawVal = value[key];
 
         if (
           typeof rawVal === "string" &&
-          !isDerivedDecodeKey(key) &&
           clickableBytes &&
           canDecodeStringField(key, rawVal) &&
           !decodedPaths.has(childPath) &&
@@ -153,14 +154,15 @@ function valueToHtml(value, path, depth, indentSize, pretty, options = {}) {
           return `${padInner}<span class="json-key">${jsonStringHtml(key)}</span>: ${val}`;
         }
 
-        const val = valueToHtml(rawVal, childPath, depth + 1, indentSize, pretty, options);
-        const keyClass = key.endsWith("_value")
-          ? "json-key json-key--bytes-value"
-          : key.endsWith("_hex")
-            ? "json-key json-key--bytes-hex"
-            : "json-key";
-        return `${padInner}<span class="${keyClass}">${jsonStringHtml(key)}</span>: ${val}`;
+        let val = valueToHtml(rawVal, childPath, depth + 1, indentSize, pretty, options);
+        if (typeof rawVal === "string" && value[`${key}_value`] !== undefined) {
+          const decodedLine = `<span class="json-bytes-result"> → <span class="json-bytes-result-value">${escapeHtml(value[`${key}_value`])}</span> <span class="json-bytes-result-hex">(${escapeHtml(value[`${key}_hex`])})</span></span>`;
+          val = `<span class="json-string">${jsonStringHtml(rawVal)}</span>${decodedLine}`;
+        }
+
+        return `${padInner}<span class="json-key">${jsonStringHtml(key)}</span>: ${val}`;
       })
+      .filter(Boolean)
       .join(`,${br}`);
     return `{${br}${items}${br}${pad}}`;
   }

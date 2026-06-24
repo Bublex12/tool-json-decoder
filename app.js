@@ -194,18 +194,17 @@ function decodeBytesAtPath(path) {
 
   const bytesStr = getValueAtPath(preview.value, path);
   if (typeof bytesStr !== "string") {
-    showToast("Не удалось декодировать");
+    statusEl.textContent = "Не удалось декодировать поле";
     return;
   }
   const decoded = decodeBytesFromString(bytesStr, bytesScaleEl?.value ?? 2);
   if (!decoded.ok) {
-    showToast(decoded.error || "Не удалось декодировать");
+    statusEl.textContent = decoded.error || "Не удалось декодировать";
     return;
   }
 
   decodedPaths.add(path);
   render();
-  showToast(`${decoded.value} (${decoded.bytesHex})`);
 }
 
 function getValueAtPath(value, path) {

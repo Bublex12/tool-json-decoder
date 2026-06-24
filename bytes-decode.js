@@ -134,22 +134,27 @@ function enrichBytesFields(value, scale, options = {}) {
 
     const out = {};
     for (const [key, val] of Object.entries(node)) {
-      out[key] = walk(val, joinJsonPath(currentPath, key));
-    }
+      if (isDerivedDecodeKey(key)) {
+        out[key] = val;
+        continue;
+      }
 
-    for (const [key, val] of Object.entries(node)) {
-      if (typeof val !== "string" || isDerivedDecodeKey(key)) continue;
-      if (out[`${key}_value`] !== undefined) continue;
+      out[key] = walk(val, joinJsonPath(currentPath, key));
 
       const fieldPath = joinJsonPath(currentPath, key);
-      const shouldDecode = decodeAll || pathSet.has(fieldPath);
-      if (!shouldDecode || !canDecodeStringField(key, val)) continue;
+      const shouldDecode =
+        typeof val === "string" &&
+        node[`${key}_value`] === undefined &&
+        (decodeAll || pathSet.has(fieldPath)) &&
+        canDecodeStringField(key, val);
 
-      const decoded = decodeBytesFromString(val, scale);
-      if (decoded.ok) {
-        out[`${key}_hex`] = decoded.bytesHex;
-        out[`${key}_value`] = decoded.value;
-        decodedCount += 1;
+      if (shouldDecode) {
+        const decoded = decodeBytesFromString(val, scale);
+        if (decoded.ok) {
+          out[`${key}_hex`] = decoded.bytesHex;
+          out[`${key}_value`] = decoded.value;
+          decodedCount += 1;
+        }
       }
     }
 
